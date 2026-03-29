@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>전압 이상 시뮬레이터 | 접지·비접지 계통</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:   #020810;
+  --bg2:  #050e1a;
+  --bg3:  #07121f;
+  --bd:   #0b1e30;
+  --bd2:  #122030;
+  --txt:  #c4d8ec;
+  --dim:  #1e3550;
+  --dim2: #0c1e30;
+  --ra:   #ef4444;
+  --ya:   #eab308;
+  --ga:   #4ade80;
+  --ba:   #38bdf8;
+  --oa:   #fb923c;
+  --pa:   #f472b6;
+  --wa:   #e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding:14px}
+h1{font-size:15px;font-weight:900;color:#7dd3fc;letter-spacing:2px;text-transform:uppercase}
+.mono{font-family:'Share Tech Mono','Courier New',monospace}
+.hdr{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);margin-bottom:14px}
+.hdr-icon{font-size:28px;filter:drop-shadow(0 0 10px #38bdf8)}
+.hdr-sub{font-size:9.5px;color:var(--dim);margin-top:2px}
+.sys-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sys-btn{padding:12px 8px;border-radius:8px;border:1px solid var(--bd);cursor:pointer;background:var(--bg2);color:var(--dim);font-family:'Share Tech Mono';transition:all .22s;text-align:center}
+.sys-btn.active-22{border-color:#38bdf8;background:#38bdf810;color:#38bdf8;box-shadow:0 0 16px #38bdf830,inset 0 0 20px #38bdf808}
+.sys-btn.active-33{border-color:#fb923c;background:#fb923c10;color:#fb923c;box-shadow:0 0 16px #fb923c30,inset 0 0 20px #fb923c08}
+.sys-btn .sys-name{font-size:13px;font-weight:bold}
+.sys-btn .sys-label{font-size:9px;opacity:.7;margin-top:2px}
+.sys-btn .sys-badge{font-size:10px;margin-top:5px;padding:3px 8px;border-radius:4px;display:inline-block}
+.fault-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.fault-btn{padding:9px 4px;border-radius:7px;border:1px solid var(--bd);cursor:pointer;background:var(--bg2);color:var(--dim);font-family:'Noto Sans KR';font-size:11px;text-align:center;transition:all .18s;line-height:1.4}
+.fault-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 25%,transparent)}
+.fault-btn .fault-icon{font-size:16px;display:block;margin-bottom:3px}
+.fault-btn .fault-sub{font-size:9px;opacity:.65}
+.main-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:12px;margin-bottom:12px}
+.phasor-box{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px}
+.box-title{font-size:10px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;font-family:'Share Tech Mono'}
+canvas#phc{display:block;width:100%;border-radius:6px;background:#020d18}
+.note-bar{margin-top:8px;padding:8px 10px;border-radius:6px;font-size:10px;line-height:1.6;border:1px solid transparent;transition:all .3s}
+.note-bar.warn{border-color:#ef444444;background:#ef444408;color:#fca5a5}
+.note-bar.info{border-color:#38bdf844;background:#38bdf808;color:#7dd3fc}
+.note-bar.safe{border-color:#4ade8044;background:#4ade8008;color:#86efac}
+.meters-box{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px}
+.meters-title{font-size:10px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;font-family:'Share Tech Mono'}
+.meters-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.meter-wrap{text-align:center}
+.meter-label{font-size:10px;margin-bottom:3px;font-family:'Share Tech Mono'}
+.meter-svg{display:block;width:100%;max-width:110px;margin:0 auto}
+.meter-val{font-size:15px;font-weight:bold;font-family:'Share Tech Mono';margin-top:-2px}
+.meter-unit{font-size:8px;opacity:.6;font-family:'Share Tech Mono'}
+.meters-divider{grid-column:1/-1;height:1px;background:var(--bd);margin:4px 0}
+.residual-row{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)}
+.res-label{font-size:10px;color:var(--dim);font-family:'Share Tech Mono';flex:1}
+.res-val{font-size:20px;font-weight:bold;font-family:'Share Tech Mono'}
+.res-bar-bg{flex:2;height:6px;border-radius:3px;background:var(--bd)}
+.res-bar{height:100%;border-radius:3px;transition:width .6s ease;background:var(--accent)}
+.formula-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.formula-hdr{padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.formula-hdr:hover{border-bottom-color:var(--bd)}
+.formula-hdr span{font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:1px}
+.formula-body{display:none;padding:14px;overflow-x:auto}
+.formula-body.open{display:block}
+.ftabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.ftab{padding:5px 10px;border-radius:5px;border:1px solid var(--bd);cursor:pointer;font-size:10px;color:var(--dim);font-family:'Share Tech Mono';transition:all .15s}
+.ftab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.formula-card{display:none;animation:fadeIn .2s ease}
+.formula-card.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fblock{background:var(--bg);border:1px solid var(--bd2);border-radius:7px;padding:12px;margin-bottom:10px}
+.fblock h3{font-size:11px;color:var(--accent2,#7dd3fc);margin-bottom:8px;font-family:'Share Tech Mono';letter-spacing:1px}
+.feq{background:#010810;border-radius:5px;padding:8px 12px;font-family:'Share Tech Mono';font-size:11.5px;color:#a0c4e4;line-height:2;margin-bottom:6px;border-left:2px solid var(--accent2,#38bdf8)}
+.ftext{font-size:10px;color:var(--dim);line-height:1.7;margin-top:6px}
+.fhi{color:var(--accent2,#7dd3fc);font-weight:bold}
+.comp-tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono';font-size:10px;margin-top:8px}
+.comp-tbl th{padding:5px 8px;background:var(--bd2);color:var(--dim);text-align:left;font-weight:normal}
+.comp-tbl td{padding:5px 8px;border-top:1px solid var(--bd2)}
+.comp-tbl tr:hover td{background:#050e1a}
+.hi-warn{color:#fca5a5;font-weight:bold}
+.hi-ok{color:#86efac}
+.hi-dim{color:var(--dim)}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:8.5px;font-family:'Share Tech Mono';margin-left:6px;vertical-align:middle}
+.tag-warn{background:#ef444420;color:#fca5a5;border:1px solid #ef444444}
+.tag-ok{background:#4ade8020;color:#86efac;border:1px solid #4ade8044}
+.tag-info{background:#38bdf820;color:#7dd3fc;border:1px solid #38bdf844}
+@media(max-width:640px){.main-grid{grid-template-columns:1fr}.fault-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="hdr"><span class="hdr-icon">⚡</span><div><h1>전압 이상 시뮬레이터</h1><div class="hdr-sub mono">접지·비접지 계통 | 지락·단선·퓨즈 단선 | 상전압·선간전압 분석</div></div></div>
+<div class="sys-row"><button class="sys-btn active-22" id="btn22" onclick="setSystem('22kV')"><div class="sys-name">22.9 kV 접지 계통</div><div class="sys-label">직접접지 (Multi-Grounded Neutral)</div><div class="sys-badge tag-info">VT 13,200 / 110 V</div></button><button class="sys-btn" id="btn33" onclick="setSystem('3300V')"><div class="sys-name">3,300 V 비접지 계통</div><div class="sys-label">IT 계통 (대지 비접지)</div><div class="sys-badge tag-ok">GVT 3,300 / 110 / 110 V</div></button></div>
+<div class="fault-row" id="faultRow"><button class="fault-btn active" data-fault="normal" onclick="setFault('normal')"><span class="fault-icon">✅</span>정상 운전<div class="fault-sub">Normal</div></button><button class="fault-btn" data-fault="slg" onclick="setFault('slg')"><span class="fault-icon">⚡</span>1선 지락<div class="fault-sub">A상 SLG</div></button><button class="fault-btn" data-fault="open" onclick="setFault('open')"><span class="fault-icon">✂️</span>1선 단선<div class="fault-sub">A상 Open</div></button><button class="fault-btn" data-fault="fuse" onclick="setFault('fuse')"><span class="fault-icon">🔌</span>퓨즈 단선<div class="fault-sub">A상 2차 퓨즈</div></button></div>
+<div class="main-grid"><div class="phasor-box"><div class="box-title mono">▸ 페이저 다이어그램 (2차측 전압)</div><canvas id="phc" width="340" height="280"></canvas><div class="note-bar info" id="noteBar"></div></div><div class="meters-box"><div class="meters-title mono">▸ 전압계 표시값 (VT/GVT 2차)</div><div class="meters-grid" id="meterGrid"></div></div></div>
+<div class="formula-wrap"><div class="formula-hdr" onclick="toggleFormula()"><span>📐 계산 수식 &amp; 이론 해설</span><span id="fArrow" style="color:var(--dim);font-size:12px">▼ 펼치기</span></div><div class="formula-body" id="fBody"><div class="ftabs" id="fTabs"></div><div id="fCards"></div></div></div>
+<script>
+const SYSTEMS={'22kV':{name:'22.9kV 접지',color:'#38bdf8',vtLabel:'VT 13,200/110V  (ratio = 120)',Vph_pri:13200,Vll_pri:22900,Vph_sec:110,Vll_sec:191,ratio:120,type:'VT'},'3300V':{name:'3300V 비접지',color:'#fb923c',vtLabel:'GVT 3,300/110/110V  (ratio = 30)',Vph_pri:1905,Vll_pri:3300,Vph_sec:64,Vll_sec:110,ratio:30,type:'GVT'}};
+const STATES={'22kV':{normal:{V:{Va:110,Vb:110,Vc:110,Vab:191,Vbc:191,Vca:191,Vo:0},P:[{l:'Va',r:1,a:0,c:'#ef4444'},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:true,note:{txt:'정상 운전: Va=Vb=Vc=110V (2차), Vab=191V (2차)',cls:'safe'}},slg:{V:{Va:0,Vb:110,Vc:110,Vab:110,Vbc:191,Vca:110,Vo:64},P:[{l:'Va',r:0,a:0,c:'#ef444466'},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:false,note:{txt:'접지계통 A상 지락: 건전상 전위 거의 불변 (중성점 접지). Va=0V',cls:'info'}},open:{V:{Va:0,Vb:110,Vc:110,Vab:110,Vbc:191,Vca:110,Vo:0},P:[{l:'Va',r:0,a:0,c:'#ef444444',dash:true},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:false,note:{txt:'A상 단선: 부하측 Va=0V. 건전상 불변. 영상전압 없음',cls:'info'}},fuse:{V:{Va:0,Vb:110,Vc:110,Vab:110,Vbc:191,Vca:110,Vo:0,primaryOk:true},P:[{l:'Va(실제)',r:1,a:0,c:'#ef444430',ghost:true},{l:'Va(표시)',r:0,a:0,c:'#ef444444',dash:true},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:false,note:{txt:'VT 2차 퓨즈 단선: 1차 전압 정상이나 계기 0V 표시',cls:'warn'}}},'3300V':{normal:{V:{Va:64,Vb:64,Vc:64,Vab:110,Vbc:110,Vca:110,Vo:0},P:[{l:'Va',r:1,a:0,c:'#ef4444'},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:true,note:{txt:'정상 운전: Va=Vb=Vc=64V (2차), Vab=110V (2차), 영상전압 Vo=0V',cls:'safe'}},slg:{V:{Va:0,Vb:110,Vc:110,Vab:110,Vbc:110,Vca:110,Vo:190},P:[{l:'Va',r:0,a:0,c:'#ef444444'},{l:'Vb',r:1.732,a:-90,c:'#eab308'},{l:'Vc',r:1.732,a:90,c:'#4ade80'}],rot:false,note:{txt:'비접지계통 A상 지락: 건전상 전위 sqrt3배 상승! 영상전압 Vo=190V',cls:'warn'}},open:{V:{Va:32,Vb:95,Vc:95,Vab:95,Vbc:110,Vca:95,Vo:0},P:[{l:'Va',r:0.5,a:0,c:'#ef4444',dash:true},{l:'Vb',r:1.48,a:-115,c:'#eab308'},{l:'Vc',r:1.48,a:115,c:'#4ade80'}],rot:false,note:{txt:'비접지 A상 단선: 중성점 전위 이동. Vb=Vc=95V, Va 저하',cls:'info'}},fuse:{V:{Va:0,Vb:64,Vc:64,Vab:64,Vbc:110,Vca:64,Vo:64,primaryOk:true},P:[{l:'Va(실제)',r:1,a:0,c:'#ef444428',ghost:true},{l:'Vb',r:1,a:-120,c:'#eab308'},{l:'Vc',r:1,a:120,c:'#4ade80'}],rot:false,note:{txt:'GVT 2차 A퓨즈 단선: 의사 영상전압 Vo=64V. OVGR 오동작 위험!',cls:'warn'}}}};
+const FORMULAS=[{id:'slg',label:'① 1선 지락',blocks:[{h:'대칭분 해석',eqs:['Ia1 = Va / (Z1 + Z2 + Z0)','Ia = 3*Ia1','Va0 = Va1 = Va2 = Va / 3'],txt:'A상 지락시 영상/정상/역상 분 전류 산출'},{h:'접지 계통 (22.9kV MGN)',eqs:['건전상 전위: Vb = Vc = Vphase (불변)','건전상 전위 상승 배율 = 1.0~1.1'],txt:'직접접지 계통은 건전상 전위 상승 억제. 지락전류 크고 계전기 감도 양호.'},{h:'비접지 계통 (3300V IT)',eqs:['건전상 전위: Vb = Vc = sqrt3*Vphase','영상전압: V0 = Vphase'],txt:'비접지: 건전상 전위 sqrt3배. 절연 위험. OVGR로 감지.'}],tbl:{hdr:['항목','22.9kV 접지','3300V 비접지'],rows:[['건전상 전위 상승','1.0배 (불변)','sqrt3배 (위험)'],['지락전류 크기','수백~수천 A','수십~수백 mA'],['검출방식','OCR, 방향계전기','OVGR (Vo 감지)'],['Vo 영상전압','수십 V (소)','Vphase (최대)']]}},{id:'open',label:'② 1선 단선',blocks:[{h:'접지 계통 - A상 단선',eqs:['Va(부하측) = 0V','Vb, Vc = 정상 (Vphase)','영상전압 V0 = 0'],txt:'단선만으로는 지락전류 없음. OCR 동작 않음. UVR 필요.'},{h:'비접지 계통 - A상 단선',eqs:['중성점 전위 이동 (Neutral Shift)','Va(부하) = 0.5*Vphase','V0 = (Va+Vb+Vc)/3 != 0'],txt:'비접지계통에서 단선시 중성점 이동. 건전상 전압 변동.'}],tbl:{hdr:['항목','접지 계통','비접지 계통'],rows:[['Va(부하측)','0V','0.5 Vphase'],['Vb, Vc','정상','다소 변동'],['영상전압 Vo','0V','소규모 발생'],['보호계전기 동작','UVR (저전압)','OVGR 미동작 가능']]}},{id:'fuse',label:'③ 변성기 퓨즈 단선',blocks:[{h:'VT 2차 퓨즈 단선',eqs:['1차 전압: 정상','2차 A상 표시: 0V','Vab_sec = 110V (정상 191V 이하)'],txt:'VT 1차측 계통 전압 정상. 2차 퓨즈만 단선. 거리계전기 오판 유발.'},{h:'GVT 2차 퓨즈 단선',eqs:['메터링 권선 A상 퓨즈 단선','의사 Vo 발생 = 64V','실제 계통 지락 없음에도 OVGR 오동작'],txt:'비접지 GVT에서 2차 퓨즈 단선은 OVGR 오동작으로 건전 선로 차단 가능.'},{h:'PTFF Logic',eqs:['조건1: |Va_sec| < 30V','조건2: 상전류 정상','조건3: Vbc_sec = 정상'],txt:'전압/전류 크로스체크로 퓨즈 단선과 실제 지락 구별.'}],tbl:{hdr:['항목','VT 2차 퓨즈 단선','GVT 2차 퓨즈 단선'],rows:[['1차 계통 상태','정상','정상'],['Va 2차 표시','0V','0V'],['영상전압 Vo','0V','64V (의사)'],['위험 계전기 오동작','UVR, 거리계전기','OVGR (오동작)'],['대책','PTFF 로직','PTFF + OVGR 블록']]}},{id:'vtcalc',label:'④ VT 계산',blocks:[{h:'VT 변압비 및 2차 전압',eqs:['n = 13200/110 = 120','정상 상전압: 13200/120 = 110V','정상 선간전압: 22900/120 = 191V'],txt:'VT 2차 전압은 계전기/전압계 입력용. 정격 110V 기준.'},{h:'GVT 변압비 및 잔류전압',eqs:['n = 3300/110 = 30','정상 상전압: 1905/30 = 63.5V','영상전압 Vo_2차 = 1905/30*3 = 190V'],txt:'GVT 3차(오픈델타) 1선 지락시 합계 190V. OVGR 설정값 기준.'}],tbl:null}];
+let curSys='22kV',curFault='normal',animId=null,rotAngle=0;
+const canvas=document.getElementById('phc'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,CX=W/2,CY=H/2+10,R0=95;
+function drawPhasors(extraRot){ctx.clearRect(0,0,W,H);for(let i=1;i<=3;i++){ctx.beginPath();ctx.arc(CX,CY,R0*(i/3),0,Math.PI*2);ctx.strokeStyle='rgba(30,60,90,'+(0.4-i*0.05)+')';ctx.lineWidth=1;ctx.stroke()}ctx.setLineDash([4,4]);ctx.strokeStyle='#0d2030';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(CX-R0-10,CY);ctx.lineTo(CX+R0+10,CY);ctx.stroke();ctx.beginPath();ctx.moveTo(CX,CY-R0-10);ctx.lineTo(CX,CY+R0+10);ctx.stroke();ctx.setLineDash([]);const sys=SYSTEMS[curSys],st=STATES[curSys][curFault];st.P.forEach(p=>{const ang=(p.a+extraRot)*Math.PI/180,r=p.r*R0,ex=CX+r*Math.cos(ang),ey=CY-r*Math.sin(ang);if(p.ghost){ctx.globalAlpha=0.35;drawArrow(ctx,CX,CY,ex,ey,p.c,1.5,true);ctx.globalAlpha=1;if(r>8){const lx=CX+(r+18)*Math.cos(ang),ly=CY-(r+18)*Math.sin(ang);ctx.fillStyle=p.c;ctx.font='9px Share Tech Mono';ctx.fillText(p.l,lx-12,ly+3)}return}if(p.r<0.05){ctx.beginPath();ctx.arc(CX,CY,4,0,Math.PI*2);ctx.fillStyle=p.c;ctx.fill();ctx.fillStyle=p.c;ctx.font='9px Share Tech Mono';ctx.fillText(p.l,CX+8,CY-8);return}ctx.setLineDash(p.dash?[5,4]:[]);drawArrow(ctx,CX,CY,ex,ey,p.c,p.r*1.7+0.8,false);ctx.setLineDash([]);const lx=CX+(r+20)*Math.cos(ang),ly=CY-(r+20)*Math.sin(ang);ctx.fillStyle=p.c;ctx.font='bold '+(p.r>1?12:10)+'px Share Tech Mono';ctx.textAlign='center';ctx.fillText(p.l,lx,ly+4);const mv=getVoltFromPhasor(p,st.V);if(mv>0){ctx.font='9px Share Tech Mono';ctx.fillStyle=p.c+'cc';const mx=CX+(r/2+5)*Math.cos(ang),my=CY-(r/2+5)*Math.sin(ang);ctx.fillText(mv+'V',mx+8,my)}});ctx.textAlign='left';ctx.font='10px Share Tech Mono';ctx.fillStyle='#1e3a50';ctx.fillText(sys.vtLabel,8,H-8);ctx.textAlign='center'}
+function getVoltFromPhasor(p,V){if(p.l.startsWith('Va'))return V.Va;if(p.l.startsWith('Vb'))return V.Vb;if(p.l.startsWith('Vc'))return V.Vc;return 0}
+function drawArrow(c,x1,y1,x2,y2,col,lw,ghost){const ang=Math.atan2(y2-y1,x2-x1),len=Math.hypot(x2-x1,y2-y1);if(len<1)return;c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=lw;if(!ghost)c.shadowColor=col,c.shadowBlur=8;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const al=10,aw=4;c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-al*Math.cos(ang-aw*0.25),y2-al*Math.sin(ang-aw*0.25));c.lineTo(x2-al*Math.cos(ang+aw*0.25),y2-al*Math.sin(ang+aw*0.25));c.closePath();c.fill();c.shadowBlur=0;c.restore()}
+function startAnimation(){if(animId)cancelAnimationFrame(animId);const st=STATES[curSys][curFault];if(st.rot){function loop(){rotAngle=(rotAngle+0.7)%360;drawPhasors(rotAngle);animId=requestAnimationFrame(loop)}loop()}else{rotAngle=0;drawPhasors(0);animId=null}}
+const METER_DEFS_PHASE=[{key:'Va',label:'Va 상전압',col:'#ef4444'},{key:'Vb',label:'Vb 상전압',col:'#eab308'},{key:'Vc',label:'Vc 상전압',col:'#4ade80'}];
+const METER_DEFS_LINE=[{key:'Vab',label:'Vab 선간',col:'#38bdf8'},{key:'Vbc',label:'Vbc 선간',col:'#a78bfa'},{key:'Vca',label:'Vca 선간',col:'#fb923c'}];
+function meterSVG(id,col){return '<svg class="meter-svg" id="'+id+'" viewBox="0 0 110 80"><path d="M10 70 A45 45 0 0 1 100 70" fill="none" stroke="#0b1e30" stroke-width="8"/><path id="'+id+'_arc" d="M10 70 A45 45 0 0 1 10 70" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round"/><line id="'+id+'_ndl" x1="55" y1="70" x2="55" y2="28" stroke="'+col+'" stroke-width="2" stroke-linecap="round" style="transform-origin:55px 70px;transform:rotate(-90deg);transition:transform .6s cubic-bezier(.4,0,0.2,1)"/><circle cx="55" cy="70" r="4" fill="'+col+'" opacity="0.8"/></svg>'}
+function buildMeters(){const g=document.getElementById('meterGrid');g.innerHTML='';METER_DEFS_PHASE.forEach(m=>{g.innerHTML+='<div class="meter-wrap"><div class="meter-label" style="color:'+m.col+'">'+m.label+'</div>'+meterSVG('m_'+m.key,m.col)+'<div class="meter-val" id="mv_'+m.key+'" style="color:'+m.col+'">-</div><div class="meter-unit">V (2차)</div></div>'});g.innerHTML+='<div class="meters-divider"></div>';METER_DEFS_LINE.forEach(m=>{g.innerHTML+='<div class="meter-wrap"><div class="meter-label" style="color:'+m.col+'">'+m.label+'</div>'+meterSVG('m_'+m.key,m.col)+'<div class="meter-val" id="mv_'+m.key+'" style="color:'+m.col+'">-</div><div class="meter-unit">V (2차)</div></div>'});const showVo=curSys==='3300V';g.innerHTML+='<div class="residual-row" id="voRow" style="display:'+(showVo?'flex':'none')+'"><div class="res-label">잔류전압 Vo<br><span style="font-size:8px;opacity:.5">(오픈델타/OVGR)</span></div><div><div class="res-val" id="mv_Vo" style="color:#f472b6">- V</div><div style="font-size:8px;color:var(--dim)">OVGR 설정 15~30V</div></div><div class="res-bar-bg" style="--accent:#f472b6"><div class="res-bar" id="voBar" style="width:0%;background:#f472b6"></div></div></div>'}
+function updateNeedle(id,val,maxVal){const ndl=document.getElementById(id+'_ndl'),arc=document.getElementById(id+'_arc');if(!ndl||!arc)return;const ratio=Math.min(val/maxVal,1),deg=-90+ratio*180;ndl.style.transform='rotate('+deg+'deg)';const cx=55,cy=70,r=45,startAng=-Math.PI,endAng=-Math.PI+ratio*Math.PI,x1=cx+r*Math.cos(startAng),y1=cy+r*Math.sin(startAng),x2=cx+r*Math.cos(endAng),y2=cy+r*Math.sin(endAng),large=ratio>0.5?1:0;if(ratio<0.005){arc.setAttribute('d','M'+x1+' '+y1+' A'+r+' '+r+' 0 0 1 '+x1+' '+y1)}else{arc.setAttribute('d','M'+x1+' '+y1+' A'+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2)}}
+function updateMeters(){const st=STATES[curSys][curFault],V=st.V,sys=SYSTEMS[curSys],maxPh=sys.Vph_sec*1.3,maxLn=sys.Vll_sec*1.3;METER_DEFS_PHASE.forEach(m=>{const v=V[m.key];document.getElementById('mv_'+m.key).textContent=v+'V';updateNeedle('m_'+m.key,v,maxPh)});METER_DEFS_LINE.forEach(m=>{const v=V[m.key];document.getElementById('mv_'+m.key).textContent=v+'V';updateNeedle('m_'+m.key,v,maxLn)});const voRow=document.getElementById('voRow');if(voRow){voRow.style.display=curSys==='3300V'?'flex':'none';const vo=V.Vo||0;document.getElementById('mv_Vo').textContent=vo+'V';document.getElementById('voBar').style.width=Math.min(vo/190*100,100)+'%'}const nb=document.getElementById('noteBar');nb.textContent=st.note.txt;nb.className='note-bar '+st.note.cls;if(V.primaryOk){nb.innerHTML+=' <span class="tag tag-ok">1차 전압 정상</span>'}}
+function buildFormulas(){const tabs=document.getElementById('fTabs'),cards=document.getElementById('fCards');tabs.innerHTML='';cards.innerHTML='';FORMULAS.forEach((f,i)=>{tabs.innerHTML+='<div class="ftab'+(i===0?' active':'')+'" onclick="switchFormula(''+f.id+'')" id="ft_'+f.id+'">'+f.label+'</div>';let html='<div class="formula-card'+(i===0?' show':'')+'" id="fc_'+f.id+'">';f.blocks.forEach(b=>{html+='<div class="fblock"><h3>'+b.h+'</h3>'+b.eqs.map(e=>'<div class="feq">'+e+'</div>').join('')+'<div class="ftext">'+b.txt+'</div></div>'});if(f.tbl){html+='<div class="fblock"><h3>비교표</h3><table class="comp-tbl"><tr>'+f.tbl.hdr.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+f.tbl.rows.map(r=>'<tr>'+r.map((c,ci)=>{const cls=ci>0&&(c.includes('위험')||c.includes('오동작')||c.includes('오판'))?'hi-warn':ci>0&&(c.includes('정상')||c.includes('불변'))?'hi-ok':'';return'<td class="'+cls+'">'+c+'</td>'}).join('')+'</tr>').join('')+'</table></div>'}html+='</div>';cards.innerHTML+=html})}
+function switchFormula(id){document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.formula-card').forEach(c=>c.classList.remove('show'));document.getElementById('ft_'+id).classList.add('active');document.getElementById('fc_'+id).classList.add('show')}
+let formulaOpen=false;
+function toggleFormula(){formulaOpen=!formulaOpen;document.getElementById('fBody').className='formula-body'+(formulaOpen?' open':'');document.getElementById('fArrow').textContent=formulaOpen?'▲ 닫기':'▼ 펼치기'}
+function setSystem(s){curSys=s;document.getElementById('btn22').className='sys-btn'+(s==='22kV'?' active-22':'');document.getElementById('btn33').className='sys-btn'+(s==='3300V'?' active-33':'');document.documentElement.style.setProperty('--accent',SYSTEMS[s].color);buildMeters();updateMeters();startAnimation()}
+function setFault(f){curFault=f;document.querySelectorAll('.fault-btn').forEach(b=>{b.classList.toggle('active',b.dataset.fault===f)});updateMeters();startAnimation()}
+document.documentElement.style.setProperty('--accent','#38bdf8');
+buildMeters();updateMeters();buildFormulas();startAnimation();
+</script>
+</body>
+</html>
